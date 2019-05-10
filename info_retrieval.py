@@ -11,6 +11,7 @@ def remove_stopwords(stopwords, data):
     Return value: data has been excluded stopwords
     """
 
+
     # Because every element is a long string, we need to split it into words
     # Each element in the orginal data now is a bunch of words
     split_string_data = [element.split() for element in data]
@@ -30,6 +31,7 @@ def remove_stopwords(stopwords, data):
 
     return processed_data
 
+
 def get_unique_words(data):
     """
     Parameters
@@ -37,6 +39,8 @@ def get_unique_words(data):
     __________
     Return value: a set of unique words in data
     """
+
+
     # Create an empty set, which later will be the return value
     unique_words = set()
 
@@ -45,17 +49,19 @@ def get_unique_words(data):
     
     return unique_words
 
+
 def remove_punctuation(data, punctuation_list = [".", "?", "!", ",", ":", ";", "'", "<", ">", "(", ")", "{", "}", "...", "\"", "[", "]", "\\", "|"]):
     """
     Parameters
     - data: a list with each element in it is a string
-    - punctuation_list: list of punctuation that you want to eliminate, each punctuation is a string form and a element in list.
-    If it's not specified, default value will be used:
-        [".", "?", "!", ",", ":", ";", "'", "<", ">", "(", ")", "{", "}", "...", "\"", "[", "]", "\\", "|"]
+    - punctuation_list: list of punctuation that you want to eliminate, each punctuation is a string form and a element in list.\n
+    If it's not specified, default value will be used:\n
+    ['.', '?', '!', ',', ':', ';', "'", '<', '>', '(', ')', '{', '}', '...', '\"', '[', ']', '\\', '|']
     __________
     Return value
     - a list of data with each element is a string
     """
+
 
     processed_data = []
     for datapoint in data:
@@ -65,19 +71,22 @@ def remove_punctuation(data, punctuation_list = [".", "?", "!", ",", ":", ";", "
 
     return processed_data
 
+
 def tf(data, dictionary, mtype=int):
     """
     tf with term t in document d is defined as the number of times that t occurs in d.
     __________
     Parameters
-    - data: a list with each element in list is a string
+    - data: a list with each element in list is a string,
     - dictionary: a list that contains unique words
-    - mtype: matrix type.
-    Type of the return value which corresponds to numpy dtype, default value is int
+    - mtype: matrix type.\n
+    Type of the return value which corresponds to numpy dtype, default value is int.
     __________
     Return value
     - A 2D matrix with type scipy.sparse.csr_matrix
     """
+
+
     row = []
     col = []
     val = []
@@ -105,21 +114,46 @@ def tf(data, dictionary, mtype=int):
     val = np.array(val)
     return sp.csr_matrix((val, (row, col)), (len(data), len(dictionary)), dtype=mtype)
 
+
+def log_tf(data, dictionary, mytype=float):
+    """
+    Logarithm tf with term t in document d is defined as:\n
+        tf = 1 + ln(tf)\n
+    with ln is logarithm with base e
+    __________
+    Parameters
+    - data: a list with each element in list is a string
+    - dictionary: a list that contains unique words
+    - mtype: matrix type.\n
+    Type of the return value which corresponds to numpy dtype, default value is float.
+    __________
+    Return value
+    - A 2D matrix with type scipy.sparse.csr_matrix
+    """
+
+
+    tf_var = tf(data, dictionary, mtype=mtype)
+    tf_var.data = 1 + np.log(tf_var.data)
+    return tf_var
+
+
 def augmented_tf(data, dictionary, alpha=0.5, mtype=float):
     """
-    Augmented tf with term t in document d is defined as:
+    Augmented tf with term t in document d is defined as:\n
         tf = alpha + (1-alpha) * tf/max(tf in d)
     __________
     Parameters
     - data: a list with each element in list is a string
     - dictionary: a list that contains unique words
     - alpha: floating number with default value is 0.5
-    - mtype: matrix type.
-    Type of the return value which corresponds to numpy dtype, default value is float
+    - mtype: matrix type.\n
+    Type of the return value which corresponds to numpy dtype, default value is float.
     __________
     Return value
     - A 2D matrix with type scipy.sparse.csr_matrix
     """
+
+
     aug_tf_var = tf(data, dictionary, mtype)
     aug_tf_var.data = (1 - alpha) * aug_tf_var.data
 
@@ -135,7 +169,7 @@ def augmented_tf(data, dictionary, alpha=0.5, mtype=float):
         """
         ________________________________________
         The code above is equivalent to this:
-        
+
         datapoint = aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]]
         if datapoint.size == 0:
             continue
@@ -152,22 +186,25 @@ def augmented_tf(data, dictionary, alpha=0.5, mtype=float):
 
     return aug_tf_var
 
+
 def boolean_tf(data, dictionary, mtype=int):
     """
-    Boolean tf with term t in document d is defined as:
+    Boolean tf with term t in document d is defined as:\n
         if t in d:
             tf = 1
-        else tf = 0
+        else: tf = 0
     __________
     Parameters
     - data: a list with each element in list is a string
     - dictionary: a list that contains unique words
-    - mtype: matrix type.
-    Type of the return value which corresponds to numpy dtype, default value is int
+    - mtype: matrix type.\n
+    Type of the return value which corresponds to numpy dtype, default value is int.
     __________
     Return value
     - A 2D matrix with type scipy.sparse.csr_matrix
     """
+
+
     row = []
     col = []
     val = []
@@ -195,10 +232,11 @@ def boolean_tf(data, dictionary, mtype=int):
     val = np.array(val)
     return sp.csr_matrix((val, (row, col)), (len(data), len(dictionary)), dtype=mtype)
 
+
 def idf(data, dictionary):
     """
-    Adjusted idf will be used to calculate idf according to this formula:
-        idf = ln(N / (1 + [number of data points where the term t appears in]))
+    Adjusted idf will be used to calculate idf according to this formula:\n
+        idf = ln(N / (1 + [number of data points where the term t appears in]))\n
     with ln is logarithm with base e
     __________
     Parameters
@@ -208,6 +246,7 @@ def idf(data, dictionary):
     Return value
     - A 2D matrix with type scipy.sparse.csr_matrix
     """
+
 
     number_of_features = len(dictionary)
     N = len(data)
@@ -241,10 +280,10 @@ def idf(data, dictionary):
     matrix.data = matrix_csc.data
     return matrix
 
+
 def tf_idf(data, dictionary, alpha=0.5):
     """
-    A faster way and memory efficiency to calculate tf-idf instead of take tf * idf separately.
-    
+    A faster way and memory efficiency to calculate tf-idf instead of take tf * idf separately.\n
     Augmented tf and adjusted idf will be used to calculate.
     __________
     Parameters
@@ -255,6 +294,7 @@ def tf_idf(data, dictionary, alpha=0.5):
     Return value
     - A 2D matrix with type scipy.sparse.csr_matrix
     """
+
 
     number_of_features = len(dictionary)
     N = len(data)
@@ -271,7 +311,6 @@ def tf_idf(data, dictionary, alpha=0.5):
         # Takes non-zero values in row i according to this formula:
         # datapoint i = data[indptr[i]:indptr[i + 1]]
         matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]] = np.log(N / (1+np.count_nonzero(matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]])))
-        
         """
         ________________________________________
         The code above is equivalent to this:
@@ -289,5 +328,27 @@ def tf_idf(data, dictionary, alpha=0.5):
         matrix_csc.indptr[i]:matrix_csc.indptr[i+1] = feature
         """
     
+
     # Element-wise tf matrix and idf matrix
     return tf_var.multiply(matrix_csc.tocsr())
+
+
+def cos_normalization(matrix):
+    """
+    Scales the components of data point so that the complete data point will have Euclidean norm equal to one.\n
+    Also, each data point is a row in matrix.
+    __________
+    Parameters
+    - matrix: a ndarray or a scipy.sparse.csr_matrix type.\n
+    If ndarray is passed, it will be converted into scipy.sparse.csr_matrix
+    __________
+    Return value
+    - A matrix with type scipy.sparse.csr_matrix
+    """
+    
+    
+    sparse_matrix = sp.csr_matrix(matrix)
+    for i in range(matrix.shape[0]):
+        sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] = sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] / np.linalg.norm(sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]], 2)
+    
+    return sparse_matrix
