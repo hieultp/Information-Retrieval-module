@@ -281,15 +281,17 @@ def idf(data, dictionary):
     return matrix
 
 
-def tf_idf(data, dictionary, alpha=0.5):
+def tf_idf(data, dictionary, func=augmented_tf, alpha=0.5):
     """
     A faster way and memory efficiency to calculate tf-idf instead of take tf * idf separately.\n
-    Augmented tf and adjusted idf will be used to calculate.
+    Augmented tf by default and adjusted idf will be used to calculate.
     __________
     Parameters
     - data: a list with each element in list is a string
     - dictionary: a list that contains unique words
-    - alpha: floating number with default value is 0.5
+    - func: tf function to calculate tf value.\n
+    List of tf function: tf, log_tf, augmented_tf, boolean_tf
+    - alpha: floating number with default value is 0.5, will be used only if func=augmented_tf
     __________
     Return value
     - A 2D matrix with type scipy.sparse.csr_matrix
@@ -299,9 +301,12 @@ def tf_idf(data, dictionary, alpha=0.5):
     number_of_features = len(dictionary)
     N = len(data)
 
-    # Calculate augmented tf
-    tf_var = augmented_tf(data, dictionary, alpha=alpha)
-    
+    # Calculate tf
+    if func == augmented_tf:
+        tf_var = func(data, dictionary, alpha=alpha)
+    else:
+        tf_var = func(data, dictionary, mtype=float)
+
     # Calulate idf matrix
     # Convert the csr_matrix to csc_matrix
     matrix_csc = tf_var.tocsc()
@@ -352,4 +357,3 @@ def cos_normalization(matrix):
         sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] = sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] / np.linalg.norm(sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]], 2)
     
     return sparse_matrix
-    
