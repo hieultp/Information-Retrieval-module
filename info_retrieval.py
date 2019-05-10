@@ -352,3 +352,4 @@ def cos_normalization(matrix):
         sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] = sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] / np.linalg.norm(sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]], 2)
     
     return sparse_matrix
+    
