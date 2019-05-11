@@ -22,7 +22,6 @@ def remove_stopwords(stopwords, data):
     for datapoint in split_string_data:
         new_datapoint = []
         for word in datapoint:
-            
             # Check if word we're proceeding appears in stopwords or not
             if word not in stopwords:
                 new_datapoint.append(word)
@@ -115,7 +114,7 @@ def tf(data, dictionary, mtype=int):
     return sp.csr_matrix((val, (row, col)), (len(data), len(dictionary)), dtype=mtype)
 
 
-def log_tf(data, dictionary, mytype=float):
+def log_tf(data, dictionary, mtype=float):
     """
     Logarithm tf with term t in document d is defined as:\n
         tf = 1 + ln(tf)\n
@@ -177,7 +176,7 @@ def augmented_tf(data, dictionary, alpha=0.5, mtype=float):
         aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]] = datapoint
         """
     # Now add the rest
-    aug_tf_var.data = aug_tf_var + alpha
+    aug_tf_var.data = aug_tf_var.data + alpha
 
     # For some reasons I dont know why but the method above it's much quick than this
     # temp = aug_tf_var.max(axis=1)
