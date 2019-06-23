@@ -105,12 +105,13 @@ def tf(data, dictionary, mtype=int):
                 row.append(i)
                 col.append(dict_index)
                 val.append(line.count(word))
-                proceeded_word.update(word)
+                proceeded_word.update([word])
     
     # Create and return a sparse matrix out of those info
     row = np.array(row)
     col = np.array(col)
     val = np.array(val)
+
     return sp.csr_matrix((val, (row, col)), (len(data), len(dictionary)), dtype=mtype)
 
 
@@ -153,15 +154,15 @@ def augmented_tf(data, dictionary, alpha=0.5, mtype=float):
     """
 
 
-    aug_tf_var = tf(data, dictionary, mtype)
-    aug_tf_var.data = (1 - alpha) * aug_tf_var.data
+    aug_tf_var = tf(data, dictionary, float)
+    aug_tf_var.data *= (1 - alpha)
 
     for i in range(aug_tf_var.shape[0]):
         # Takes non-zero values in row i according to this formula:
         # datapoint i = data[indptr[i]:indptr[i + 1]]
         # Then calculate according to definition
         try:
-            aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]] = aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]]/np.max(aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]])
+            aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]] /= np.max(aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]])
         except ValueError: # raises if datapoint is empty
             pass
         
@@ -176,14 +177,14 @@ def augmented_tf(data, dictionary, alpha=0.5, mtype=float):
         aug_tf_var.data[aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]] = datapoint
         """
     # Now add the rest
-    aug_tf_var.data = aug_tf_var.data + alpha
+    aug_tf_var.data += alpha
 
     # For some reasons I dont know why but the method above it's much quick than this
     # temp = aug_tf_var.max(axis=1)
     # temp.data = 1 / temp.data
-    # aug_tf_var = aug_tf_var.multiply(temp)
+    # aug_tf_var = aug_tf_var.multiply(temp) + 0.5
 
-    return aug_tf_var
+    return sp.csr_matrix(aug_tf_var, dtype=mtype)
 
 
 def boolean_tf(data, dictionary, mtype=int):
@@ -223,12 +224,13 @@ def boolean_tf(data, dictionary, mtype=int):
                 row.append(i)
                 col.append(dict_index)
                 val.append(1)
-                proceeded_word.update(word)
+                proceeded_word.update([word])
     
     # Create and return a sparse matrix out of those info
     row = np.array(row)
     col = np.array(col)
     val = np.array(val)
+
     return sp.csr_matrix((val, (row, col)), (len(data), len(dictionary)), dtype=mtype)
 
 
@@ -250,11 +252,13 @@ def idf(data, dictionary):
     number_of_features = len(dictionary)
     N = len(data)
     matrix = boolean_tf(data, dictionary, float)
+
     # Convert the csr_matrix to csc_matrix
     matrix_csc = matrix.tocsc()
+
     # The idea is count how many non-zero values in one feature
     for i in range(number_of_features):
-        # Takes non-zero values in row i according to this formula:
+        # Takes non-zero values in col i according to this formula:
         # datapoint i = data[indptr[i]:indptr[i + 1]]
         matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]] = np.log(N / (1+np.count_nonzero(matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]])))
         
@@ -265,7 +269,7 @@ def idf(data, dictionary):
         # Take one feature of data
         feature = matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]]
         
-        # Count how many non-zero values in future we're looking into
+        # Count how many non-zero values in the feature we're looking into
         nonzero_values = np.count_nonzero(feature)
         
         # Caluclate it idf
@@ -275,9 +279,7 @@ def idf(data, dictionary):
         matrix_csc.indptr[i]:matrix_csc.indptr[i+1] = feature
         """
 
-    # Assign data have been proceeded to the original matrix
-    matrix.data = matrix_csc.data
-    return matrix
+    return matrix_csc.tocsr()
 
 
 def tf_idf(data, dictionary, func=augmented_tf, alpha=0.5):
@@ -312,17 +314,18 @@ def tf_idf(data, dictionary, func=augmented_tf, alpha=0.5):
     
     # The idea is count how many non-zero values in one feature
     for i in range(number_of_features):
-        # Takes non-zero values in row i according to this formula:
+        # Takes non-zero values in col i according to this formula:
         # datapoint i = data[indptr[i]:indptr[i + 1]]
         matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]] = np.log(N / (1+np.count_nonzero(matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]])))
-        """
+        
+        """ 
         ________________________________________
         The code above is equivalent to this:
         
         # Take one feature of data
         feature = matrix_csc.data[matrix_csc.indptr[i]:matrix_csc.indptr[i+1]]
         
-        # Count how many non-zero values in future we're looking into
+        # Count how many non-zero values in the feature we're looking into
         nonzero_values = np.count_nonzero(feature)
         
         # Caluclate it idf
@@ -331,13 +334,12 @@ def tf_idf(data, dictionary, func=augmented_tf, alpha=0.5):
         # Assign it back to the matrix
         matrix_csc.indptr[i]:matrix_csc.indptr[i+1] = feature
         """
-    
 
     # Element-wise tf matrix and idf matrix
     return tf_var.multiply(matrix_csc.tocsr())
 
 
-def cos_normalization(matrix):
+def unit_length_scaling(matrix):
     """
     Scales the components of data point so that the complete data point will have Euclidean norm equal to one.\n
     Also, each data point is a row in matrix.
@@ -351,8 +353,42 @@ def cos_normalization(matrix):
     """
     
     
-    sparse_matrix = sp.csr_matrix(matrix)
+    # Convert matrix to scipy.sparse.csr_matrix with dtype=float
+    sparse_matrix = sp.csr_matrix(matrix, dtype=float)
+    
     for i in range(matrix.shape[0]):
-        sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] = sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]] / np.linalg.norm(sparse_matrix[sparse_matrix.indptr[i]:sparse_matrix.indptr[i]], 2)
+        sparse_matrix.data[sparse_matrix.indptr[i]:sparse_matrix.indptr[i+1]] /= np.linalg.norm(sparse_matrix.data[sparse_matrix.indptr[i]:sparse_matrix.indptr[i+1]], 2)
     
     return sparse_matrix
+
+
+def sim(matrix1, matrix2):
+    """
+    Calculates the similarity between two vectors.\n
+    The formula is: sim(u, v) = cos(u, v) + 1 \n
+    If you pass two matrices, the return value will be a vector with each element in it is similary between one row of matrix2 to every row of matrix1, and so on.\n
+    Example:
+    \tmatrix1 = [a, b]\n
+    \tmatrix2 = [d, e]\n
+    The return value will look like this:\n
+    \t[[sim(d, a) sim(d, b)]\n
+    \t [sim(e, a) sim(e, b)]]\n
+    Hope you take the idea.\n
+    __________
+    Parameters
+    - matrix1, matrix2: scipy.sparse.csr_matrix type with the same shape.\n
+    If ndarray is passed, I don't what could happen. So, do it as your own risk.
+    __________
+    Return value
+    - A matrix with type numpy.ndarray or scaler if two vectors were passed.
+    """
+
+    matrix1 = unit_length_scaling(matrix1)
+    matrix2 = unit_length_scaling(matrix2)
+    result = matrix2 @ matrix1.T
+    result.data = result.data + 1.0
+    if result.shape[0] == 1 and result.shape[1] == 1:
+        return result.toarray()[0][0]
+    else:
+        return result.toarray()
+    
