@@ -39,10 +39,30 @@ def get_unique_words(data):
     return unique_words
 
 
-def remove_punctuation(data, punctuations=[
-    ".", "?", "!", ",", ":", ";", "'", "<", ">", "(", ")",
-    "{", "}", "...", "\"", "[", "]", "\\", "|"
-]):
+def remove_punctuation(
+    data,
+    punctuations=[
+        ".",
+        "?",
+        "!",
+        ",",
+        ":",
+        ";",
+        "'",
+        "<",
+        ">",
+        "(",
+        ")",
+        "{",
+        "}",
+        "...",
+        '"',
+        "[",
+        "]",
+        "\\",
+        "|",
+    ],
+):
     """Args:
     - data (list): a list with each element in it is a string
     - punctuation_list (list): list of punctuation that you want to eliminate,
@@ -110,9 +130,7 @@ def tf(data, dictionary, mtype=int):
     col = np.array(col)
     val = np.array(val)
 
-    return sp.csr_matrix(
-        (val, (row, col)), (len(data), len(dictionary)), dtype=mtype
-    )
+    return sp.csr_matrix((val, (row, col)), (len(data), len(dictionary)), dtype=mtype)
 
 
 def log_tf(data, dictionary, mtype=float):
@@ -153,18 +171,16 @@ def augmented_tf(data, dictionary, alpha=0.5, mtype=float):
     """
 
     aug_tf_var = tf(data, dictionary, float)
-    aug_tf_var.data *= (1 - alpha)
+    aug_tf_var.data *= 1 - alpha
 
     for i in range(aug_tf_var.shape[0]):
         # Takes non-zero values in row i according to this formula:
         # datapoint i = data[indptr[i]:indptr[i + 1]]
         # Then calculate augmented tf by follow to its definition
         try:
-            aug_tf_var.data[
-                aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]
-                ] /= np.max(aug_tf_var.data[
-                            aug_tf_var.indptr[i]:aug_tf_var.indptr[i + 1]
-                            ])
+            aug_tf_var.data[aug_tf_var.indptr[i] : aug_tf_var.indptr[i + 1]] /= np.max(
+                aug_tf_var.data[aug_tf_var.indptr[i] : aug_tf_var.indptr[i + 1]]
+            )
         except ValueError:  # raises if datapoint is empty
             pass
 
@@ -239,9 +255,7 @@ def boolean_tf(data, dictionary, mtype=int):
     col = np.array(col)
     val = np.array(val)
 
-    return sp.csr_matrix(
-        (val, (row, col)), (len(data), len(dictionary)), dtype=mtype
-    )
+    return sp.csr_matrix((val, (row, col)), (len(data), len(dictionary)), dtype=mtype)
 
 
 def idf(data, dictionary):
@@ -268,13 +282,15 @@ def idf(data, dictionary):
     for i in range(number_of_features):
         # Takes non-zero values in col i according to this formula:
         # datapoint i = data[indptr[i]:indptr[i + 1]]
-        matrix_csc.data[
-            matrix_csc.indptr[i]:matrix_csc.indptr[i+1]
-            ] = np.log(N / (1+np.count_nonzero(
-                matrix_csc.data[
-                    matrix_csc.indptr[i]:matrix_csc.indptr[i+1]
-                    ]
-                )))
+        matrix_csc.data[matrix_csc.indptr[i] : matrix_csc.indptr[i + 1]] = np.log(
+            N
+            / (
+                1
+                + np.count_nonzero(
+                    matrix_csc.data[matrix_csc.indptr[i] : matrix_csc.indptr[i + 1]]
+                )
+            )
+        )
     """
     ______________________________
     The code above is equivalent to this:
@@ -329,12 +345,15 @@ def tf_idf(data, dictionary, func=augmented_tf, alpha=0.5):
     for i in range(number_of_features):
         # Takes non-zero values in col i according to this formula:
         # datapoint i = data[indptr[i]:indptr[i + 1]]
-        matrix_csc.data[
-            matrix_csc.indptr[i]:matrix_csc.indptr[i+1]
-            ] = np.log(N / (1+np.count_nonzero(
-                matrix_csc.data[
-                    matrix_csc.indptr[i]:matrix_csc.indptr[i+1]
-                    ])))
+        matrix_csc.data[matrix_csc.indptr[i] : matrix_csc.indptr[i + 1]] = np.log(
+            N
+            / (
+                1
+                + np.count_nonzero(
+                    matrix_csc.data[matrix_csc.indptr[i] : matrix_csc.indptr[i + 1]]
+                )
+            )
+        )
 
     """
     ______________________________
@@ -375,11 +394,10 @@ def unit_length_scaling(matrix):
 
     for i in range(matrix.shape[0]):
         sparse_matrix.data[
-            sparse_matrix.indptr[i]:sparse_matrix.indptr[i+1]
-            ] /= np.linalg.norm(
-                sparse_matrix.data[
-                    sparse_matrix.indptr[i]:sparse_matrix.indptr[i+1]
-                    ], 2)
+            sparse_matrix.indptr[i] : sparse_matrix.indptr[i + 1]
+        ] /= np.linalg.norm(
+            sparse_matrix.data[sparse_matrix.indptr[i] : sparse_matrix.indptr[i + 1]], 2
+        )
 
     return sparse_matrix
 
