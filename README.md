@@ -1,6 +1,6 @@
 # Information Retrieval module
 
-My handmade python module to do a case study I had in University. All of these functions are written to process text so sparse matrix is usually used in these.
+My handmade python module to do a case study I had in university. All of these functions are written to process text so sparse matrix is heavily used in these.
 
 List of functions:
 
